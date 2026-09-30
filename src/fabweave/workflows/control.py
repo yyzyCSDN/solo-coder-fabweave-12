@@ -5,7 +5,9 @@ from dataclasses import dataclass, replace
 from fabweave.chamber.matching import Tolerance, mismatch_reasons
 from fabweave.chemicals.shelf_life import shelf_life_remaining
 from fabweave.cleanroom.excursion import active_excursion
+from fabweave.contamination.recall import RecallRecord, recall_contamination, trace_contamination
 from fabweave.contamination.segregation import incompatible_pairs
+from fabweave.contamination.trace import ContaminationGraph, TraceResult
 from fabweave.core.decision import Decision, allow, deny
 from fabweave.core.events import EventLog
 from fabweave.core.timebox import TimeBox
@@ -13,6 +15,7 @@ from fabweave.dedication.tool import DedicationPolicy, policy_decision
 from fabweave.dispatch.priority import DispatchCandidate, rank_candidates
 from fabweave.energy.demand import demand_violations
 from fabweave.genealogy.carrier import GenealogyGraph
+from fabweave.holds.ledger import HoldLedger
 from fabweave.holds.release import HoldState, release_decision
 from fabweave.lot.merge import Lot, merge_lots
 from fabweave.maintenance.window import MaintenancePolicy, assignment_decision
@@ -193,6 +196,22 @@ def record_containment(
         {"scope": list(scope)},
     )
     return ContainmentRecord(tuple(event.data["scope"]), event.sequence)
+
+
+def contamination_trace(graph: ContaminationGraph, seeds: list[str], max_depth: int) -> TraceResult:
+    return trace_contamination(graph, seeds, max_depth)
+
+
+def issue_contamination_recall(
+    log: EventLog,
+    hold_ledger: HoldLedger,
+    recall_id: str,
+    graph: ContaminationGraph,
+    seeds: list[str],
+    max_depth: int,
+    at: int,
+) -> RecallRecord:
+    return recall_contamination(log, hold_ledger, recall_id, graph, seeds, max_depth, at)
 
 
 def powered_assignment(
